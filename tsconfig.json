@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/node18-strictest/tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "removeComments": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["dist"]
+}

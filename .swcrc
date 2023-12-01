@@ -4,9 +4,9 @@
     "parser": {
       "syntax": "typescript"
     },
-    "target": "es2017"
+    "target": "esnext"
   },
   "module": {
-    "type": "commonjs"
+    "type": "es6"
   }
 }

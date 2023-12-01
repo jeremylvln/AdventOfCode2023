@@ -57,24 +57,24 @@ const findLastDigit = (
   line: string,
 ): number => findDigit(dictionnary, line, line.length - 1, -1).toUndefined()!;
 
+const findFullNumber =
+  (dictionnary: Record<string, number>) =>
+  (line: string): number => {
+    const firstDigit = findFirstDigit(dictionnary, line);
+    const lastDigit = findLastDigit(dictionnary, line);
+    return Number.parseInt(`${firstDigit}${lastDigit}`);
+  };
+
 day(1, (input, part) => {
   part(1, () =>
     input
-      .map((line) => {
-        const firstDigit = findFirstDigit(DIGIT_LITERALS, line);
-        const lastDigit = findLastDigit(DIGIT_LITERALS, line);
-        return Number.parseInt(`${firstDigit}${lastDigit}`);
-      })
+      .map(findFullNumber(DIGIT_LITERALS))
       .reduce((accumulator, nb) => accumulator + nb, 0),
   );
 
   part(2, () =>
     input
-      .map((line) => {
-        const firstDigit = findFirstDigit(DIGIT_LITERALS_WITH_WRITTEN, line);
-        const lastDigit = findLastDigit(DIGIT_LITERALS_WITH_WRITTEN, line);
-        return Number.parseInt(`${firstDigit}${lastDigit}`);
-      })
+      .map(findFullNumber(DIGIT_LITERALS_WITH_WRITTEN))
       .reduce((accumulator, nb) => accumulator + nb, 0),
   );
 });

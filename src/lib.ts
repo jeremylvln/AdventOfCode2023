@@ -47,7 +47,9 @@ export const day = (
   nb: DayNumber,
   handler: (input: readonly string[], part: PartFunction) => void,
 ) => {
-  const inputPath = path.join(__dirname, '..', 'inputs', `day${nb}.txt`);
+  const dayFileName =
+    process.argv[2] === '--sample' ? `day${nb}.sample.txt` : `day${nb}.txt`;
+  const inputPath = path.join(__dirname, '..', 'inputs', dayFileName);
   const input = fs.readFileSync(inputPath, 'utf8').split('\n');
   return handler(input, createPartFunction(nb));
 };

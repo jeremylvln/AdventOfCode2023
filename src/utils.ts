@@ -33,3 +33,18 @@ export const memoize = <I extends string | number | symbol, O>(
     }
   };
 };
+
+export class AABB {
+  constructor(
+    readonly minX: number,
+    readonly minY: number,
+    readonly maxX: number,
+    readonly maxY: number,
+  ) {}
+
+  readonly doesCollideWith = (other: AABB): boolean =>
+    this.minX <= other.maxX &&
+    this.maxX >= other.minX &&
+    this.minY <= other.maxY &&
+    this.maxY >= other.minY;
+}

@@ -48,3 +48,11 @@ export class AABB {
     this.minY <= other.maxY &&
     this.maxY >= other.minY;
 }
+
+export const createPipeline =
+  <T>(functions: readonly ((input: T) => T)[]) =>
+  (input: T): T =>
+    functions.reduce(
+      (previous, mappingFunction) => mappingFunction(previous),
+      input,
+    );

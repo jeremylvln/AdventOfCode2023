@@ -71,6 +71,7 @@ module.exports = {
             checkFilenames: false,
           },
         ],
+        'unicorn/no-array-reduce': 'off',
       },
     },
   ],

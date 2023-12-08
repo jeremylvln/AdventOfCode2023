@@ -1,3 +1,4 @@
+export type Predicate<T> = (input: T) => boolean;
 export type Readonly2DArray<T> = readonly (readonly T[])[];
 
 export const impossible = (): never => {
@@ -56,3 +57,11 @@ export const createPipeline =
       (previous, mappingFunction) => mappingFunction(previous),
       input,
     );
+
+export const lcm = (a: number, b: number): number => {
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  return (a * b) / gcd(a, b);
+};
+
+export const lcmOfArray = (array: readonly number[]): number =>
+  array.reduce((previous, current) => lcm(previous, current), 1);

@@ -72,6 +72,7 @@ module.exports = {
           },
         ],
         'unicorn/no-array-reduce': 'off',
+        'sonarjs/cognitive-complexity': 'off',
       },
     },
   ],

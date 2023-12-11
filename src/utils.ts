@@ -1,9 +1,13 @@
 export type Predicate<T> = (input: T) => boolean;
 export type Readonly2DArray<T> = readonly (readonly T[])[];
+export type Point = [x: number, y: number];
 
 export const impossible = (): never => {
   throw new Error('Impossible');
 };
+
+export const sum = (array: readonly number[]): number =>
+  array.reduce((previous, current) => previous + current, 0);
 
 export const chunkArray = <T>(
   array: readonly T[],
@@ -65,3 +69,6 @@ export const lcm = (a: number, b: number): number => {
 
 export const lcmOfArray = (array: readonly number[]): number =>
   array.reduce((previous, current) => lcm(previous, current), 1);
+
+export const manhattanDistance = (a: Point, b: Point): number =>
+  Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);

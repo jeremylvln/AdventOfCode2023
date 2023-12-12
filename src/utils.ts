@@ -23,17 +23,20 @@ export const arrayReverse = <T>(array: readonly T[]): readonly T[] =>
     (_, index) => array[array.length - 1 - index]!,
   );
 
-export const memoize = <I extends string | number | symbol, O>(
-  function_: (input: I) => O,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const memoize = <I extends any[], O>(
+  function_: (...inputs: I) => O,
+  deriveCacheKey: (...inputs: I) => string,
 ) => {
-  const cache: Partial<Record<I, O>> = {};
+  const cache: Map<string, O> = new Map();
 
-  return (input: I) => {
-    if (input in cache) {
-      return cache[input];
+  return (...inputs: I) => {
+    const cacheKey = deriveCacheKey(...inputs);
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey)!;
     } else {
-      const output = function_(input);
-      cache[input] = output;
+      const output = function_(...inputs);
+      cache.set(cacheKey, output);
       return output;
     }
   };

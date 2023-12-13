@@ -1,127 +1,95 @@
-import { Option } from '@swan-io/boxed';
+import { match } from 'ts-pattern';
 
 import { day } from './lib.js';
-import { sum } from './utils.js';
+import { NonEmptyArray, memoize, sum } from './utils.js';
 
-type RowChar = '.' | '#' | '?';
+type Spring = '.' | '#' | '?';
 type Row = {
-  chars: RowChar[];
-  matches: number[];
+  springs: Spring[];
+  lengths: number[];
 };
 
-const findNextFit = (
-  chars: readonly RowChar[],
-  delta: number,
-  length: number,
-): Option<number> => {
-  for (let index = delta; index < chars.length - length + 1; index += 1) {
-    // If the previous char is a #, we can't fit here
-    if (index - 1 > 0 && chars[index - 1] === '#') {
-      continue;
-    }
+const createResolver = () => {
+  const self = memoize(
+    (springs: readonly Spring[], lengths: readonly number[]): number => {
+      if (springs.length === 0) {
+        return lengths.length === 0 ? 1 : 0;
+      }
 
-    // If the next char is a #, we can't fit here
-    if (index + length < chars.length && chars[index + length] === '#') {
-      continue;
-    }
+      const [currentSpring, ...remainingSprings] =
+        springs as NonEmptyArray<Spring>;
 
-    const slice = chars.slice(index, index + length);
-    if (slice.every((c) => c === '#' || c === '?')) {
-      return Option.Some(index);
-    }
-  }
+      return match(currentSpring)
+        .with('.', () => self(remainingSprings, lengths))
+        .with(
+          '?',
+          () =>
+            self(['#', ...remainingSprings], lengths) +
+            self(['.', ...remainingSprings], lengths),
+        )
+        .with('#', () => {
+          if (lengths.length === 0) {
+            return 0;
+          }
 
-  return Option.None();
+          const [currentLength, ...remainingLengths] =
+            lengths as NonEmptyArray<number>;
+
+          let blockLength = 0;
+          while (springs[blockLength] === '#' || springs[blockLength] === '?') {
+            blockLength += 1;
+          }
+
+          if (blockLength < currentLength || springs[currentLength] === '#') {
+            return 0;
+          }
+
+          return self(springs.slice(currentLength + 1), remainingLengths);
+        })
+        .exhaustive();
+    },
+    (springs, lengths) => `${springs.join('')}:${lengths.join(',')}}`,
+  );
+
+  return self;
 };
 
-const findAllMatches = (knownMatches: Set<string>, max: number) => {
-  const inner = (
-    chars: readonly RowChar[],
-    delta: number,
-    matchesRest: number[],
-  ) => {
-    const matchToFit = matchesRest[0]!;
-    const maybeNextFit = findNextFit(chars, delta, matchToFit);
-
-    // If we don't found a match, the suffix is impossible, we're done
-    if (maybeNextFit.isNone()) {
-      return;
-    }
-
-    const nextFit = maybeNextFit.value;
-    const endFit = nextFit + matchToFit;
-
-    const patchedChars = [...chars];
-    for (let index = nextFit; index < endFit; index += 1) {
-      patchedChars[index] = '#';
-    }
-
-    if (matchesRest.length === 1) {
-      if (patchedChars.filter((c) => c === '#').length === max) {
-        knownMatches.add(patchedChars.join(''));
-      }
-
-      return;
-    }
-
-    for (let nextStart = endFit + 1; nextStart < chars.length; nextStart += 1) {
-      if (chars[nextStart] === '.') {
-        continue;
-      }
-
-      inner(patchedChars, nextStart, matchesRest.slice(1));
-    }
-
-    return knownMatches;
+const unfoldRow = (row: Row, factor: number): Row => {
+  const expandedRow: Row = {
+    springs: [],
+    lengths: [],
   };
 
-  return inner;
-};
-
-const countRowPossibilities = (row: Row): number => {
-  const knownMatches = new Set<string>();
-  const max = sum(row.matches);
-
-  for (let index = 0; index < row.chars.length; index += 1) {
-    findAllMatches(knownMatches, max)(row.chars, index, row.matches);
+  for (let index = 0; index < factor; index += 1) {
+    expandedRow.springs.push(...row.springs, '?');
+    expandedRow.lengths.push(...row.lengths);
   }
 
-  return knownMatches.size;
+  expandedRow.springs.pop();
+  return expandedRow;
 };
-
-// const expandRow = (row: Row, factor: number): Row => {
-//   const charsCopies = Array.from({ length: factor }, () => row.chars);
-//   const matchesCopies = Array.from({ length: factor }, () => row.matches);
-
-//   const charsAccumulator: RowChar[] = [];
-//   for (const copy of charsCopies) {
-//     charsAccumulator.push(...copy, '?');
-//   }
-//   charsAccumulator.pop();
-
-//   const matchesAccumulator: number[] = [];
-//   for (const copy of matchesCopies) {
-//     matchesAccumulator.push(...copy);
-//   }
-
-//   return { chars: charsAccumulator, matches: matchesAccumulator };
-// };
 
 const parseRows = (lines: readonly string[]): Row[] =>
   lines.map((line) => {
-    const [charsRaw, matchesRaw] = line.split(' ') as [string, string];
+    const [springsRaw, lengthsRaw] = line.split(' ') as [string, string];
     return {
-      chars: [...charsRaw] as RowChar[],
-      matches: matchesRaw.split(',').map((s) => Number.parseInt(s)),
+      springs: [...springsRaw] as Spring[],
+      lengths: lengthsRaw.split(',').map((s) => Number.parseInt(s)),
     };
   });
 
 day(12, (input, part) => {
   const rows = parseRows(input);
 
-  part(1, () => sum(rows.map((row) => countRowPossibilities(row))));
+  part(1, () =>
+    sum(rows.map((row) => createResolver()(row.springs, row.lengths))),
+  );
 
-  // part(2, () =>
-  //   sum(rows.map((row) => countRowPossibilities(expandRow(row, 5)))),
-  // );
+  part(2, () =>
+    sum(
+      rows
+        .map((row) => unfoldRow(row, 5))
+        .map((row) => createResolver()(row.springs, row.lengths)),
+    ),
+  );
 });

@@ -1,6 +1,7 @@
 export type Predicate<T> = (input: T) => boolean;
 export type Readonly2DArray<T> = readonly (readonly T[])[];
 export type Point = [x: number, y: number];
+export type NonEmptyArray<T> = [T, ...T[]];
 
 export const impossible = (): never => {
   throw new Error('Impossible');

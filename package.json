@@ -41,6 +41,7 @@
   "author": "Jérémy Levilain <jeremy@jeremylvln.fr>",
   "dependencies": {
     "@swan-io/boxed": "1.2.0",
+    "heap-js": "^2.3.0",
     "ts-pattern": "5.0.5"
   },
   "devDependencies": {

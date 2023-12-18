@@ -1,6 +1,6 @@
 export type Predicate<T> = (input: T) => boolean;
 export type Readonly2DArray<T> = readonly (readonly T[])[];
-export type Point = [x: number, y: number];
+export type Point = { x: number; y: number };
 export type NonEmptyArray<T> = [T, ...T[]];
 
 export const impossible = (): never => {
@@ -75,4 +75,16 @@ export const lcmOfArray = (array: readonly number[]): number =>
   array.reduce((previous, current) => lcm(previous, current), 1);
 
 export const manhattanDistance = (a: Point, b: Point): number =>
-  Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+  Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+export const shoelace = (edges: readonly Point[]): number => {
+  let area = 0;
+
+  for (let index = 0; index < edges.length; index += 1) {
+    const current = edges[index]!;
+    const next = edges[(index + 1) % edges.length]!;
+    area += current.x * next.y - next.x * current.y;
+  }
+
+  return Math.abs(area / 2);
+};

@@ -25,8 +25,8 @@ const getDistance = (
   first: Galaxy,
   second: Galaxy,
 ): number => {
-  const [firstX, firstY] = first.point;
-  const [secondX, secondY] = second.point;
+  const { x: firstX, y: firstY } = first.point;
+  const { x: secondX, y: secondY } = second.point;
   const [minX, maxX] = [Math.min(firstX, secondX), Math.max(firstX, secondX)];
   const [minY, maxY] = [Math.min(firstY, secondY), Math.max(firstY, secondY)];
   let distance = manhattanDistance(first.point, second.point);
@@ -105,7 +105,7 @@ const parseGalaxyMap = (lines: readonly string[]): GalaxyMap => {
         char === '#'
           ? {
               id: currentGalaxyId++,
-              point: [x, y],
+              point: { x, y },
             }
           : undefined,
       )

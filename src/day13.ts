@@ -1,7 +1,8 @@
 import { Option } from '@swan-io/boxed';
 
 import { day } from './lib.js';
-import { impossible, sum } from './utils.js';
+import { sum } from './math.js';
+import { impossible } from './utils.js';
 
 type PatternChar = '.' | '#';
 type Pattern = PatternChar[][];

@@ -1,5 +1,6 @@
 import { day } from './lib.js';
-import { Predicate, lcmOfArray } from './utils.js';
+import { lcmOfArray } from './math.js';
+import { Predicate } from './utils.js';
 
 type Direction = 'L' | 'R';
 type BuildingNode = {

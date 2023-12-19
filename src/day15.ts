@@ -1,5 +1,5 @@
 import { day } from './lib.js';
-import { sum } from './utils.js';
+import { sum } from './math.js';
 
 type Lens = string;
 type SequenceStepEqual = `${Lens}=${number}`;

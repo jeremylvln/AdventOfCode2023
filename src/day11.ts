@@ -1,5 +1,5 @@
 import { day } from './lib.js';
-import { Point, manhattanDistance, sum } from './utils.js';
+import { Point, sum } from './math.js';
 
 type MapCharacter = '.' | '#';
 type PairsMap = Map<`${number},${number}`, number>;
@@ -29,7 +29,7 @@ const getDistance = (
   const { x: secondX, y: secondY } = second.point;
   const [minX, maxX] = [Math.min(firstX, secondX), Math.max(firstX, secondX)];
   const [minY, maxY] = [Math.min(firstY, secondY), Math.max(firstY, secondY)];
-  let distance = manhattanDistance(first.point, second.point);
+  let distance = first.point.manhattanDistanceTo(second.point);
 
   for (let y = minY; y <= maxY; y += 1) {
     if (galaxyMap.expandedRows.includes(y)) {
@@ -101,11 +101,11 @@ const parseGalaxyMap = (lines: readonly string[]): GalaxyMap => {
   let currentGalaxyId = 1;
   const galaxies: Galaxy[] = map.flatMap((row, y) =>
     row
-      .map((char, x) =>
+      .map((char, x): Galaxy | undefined =>
         char === '#'
           ? {
               id: currentGalaxyId++,
-              point: { x, y },
+              point: new Point(x, y),
             }
           : undefined,
       )

@@ -1,14 +1,10 @@
 export type Predicate<T> = (input: T) => boolean;
 export type Readonly2DArray<T> = readonly (readonly T[])[];
-export type Point = { x: number; y: number };
 export type NonEmptyArray<T> = [T, ...T[]];
 
 export const impossible = (): never => {
   throw new Error('Impossible');
 };
-
-export const sum = (array: readonly number[]): number =>
-  array.reduce((previous, current) => previous + current, 0);
 
 export const chunkArray = <T>(
   array: readonly T[],
@@ -43,21 +39,6 @@ export const memoize = <I extends any[], O>(
   };
 };
 
-export class AABB {
-  constructor(
-    readonly minX: number,
-    readonly minY: number,
-    readonly maxX: number,
-    readonly maxY: number,
-  ) {}
-
-  readonly doesCollideWith = (other: AABB): boolean =>
-    this.minX <= other.maxX &&
-    this.maxX >= other.minX &&
-    this.minY <= other.maxY &&
-    this.maxY >= other.minY;
-}
-
 export const createPipeline =
   <T>(functions: readonly ((input: T) => T)[]) =>
   (input: T): T =>
@@ -65,26 +46,3 @@ export const createPipeline =
       (previous, mappingFunction) => mappingFunction(previous),
       input,
     );
-
-export const lcm = (a: number, b: number): number => {
-  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-  return (a * b) / gcd(a, b);
-};
-
-export const lcmOfArray = (array: readonly number[]): number =>
-  array.reduce((previous, current) => lcm(previous, current), 1);
-
-export const manhattanDistance = (a: Point, b: Point): number =>
-  Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-
-export const shoelace = (edges: readonly Point[]): number => {
-  let area = 0;
-
-  for (let index = 0; index < edges.length; index += 1) {
-    const current = edges[index]!;
-    const next = edges[(index + 1) % edges.length]!;
-    area += current.x * next.y - next.x * current.y;
-  }
-
-  return Math.abs(area / 2);
-};

@@ -1,7 +1,9 @@
 import { Option } from '@swan-io/boxed';
+import { match } from 'ts-pattern';
 
 import { day } from './lib.js';
-import { impossible, sum } from './utils.js';
+import { Range, sum } from './math.js';
+import { impossible } from './utils.js';
 
 type WorkflowName = string;
 type Category = 'x' | 'm' | 'a' | 's';
@@ -24,16 +26,18 @@ type Workflow = {
   conditions: readonly Condition[];
 };
 
-type WorkflowMap = Map<WorkflowName, Workflow>;
-type WorkflowPartsMap = Map<WorkflowName, Part[]>;
-
 type Part = {
   [category in Category]: number;
 };
 
-type Outcome = {
-  part: Part;
-  outcome: 'A' | 'R';
+type WorkflowMap = Map<WorkflowName, Workflow>;
+type WorkflowPartsMap = Map<WorkflowName, Part[]>;
+type WorkflowCombinationsMap = Map<WorkflowName, RangeCombination[]>;
+
+type Outcome = 'A' | 'R';
+
+type RangeCombination = {
+  [category in Category]: Range;
 };
 
 const parseWorkflow = (line: string): Workflow => {
@@ -148,10 +152,7 @@ const applyWorkflowToPart = (
   }
 
   if (redirectTo.value === 'A' || redirectTo.value === 'R') {
-    return Option.Some({
-      part,
-      outcome: redirectTo.value,
-    });
+    return Option.Some(redirectTo.value);
   }
 
   if (partsOnWorkflows.has(redirectTo.value)) {
@@ -163,12 +164,9 @@ const applyWorkflowToPart = (
   return Option.None();
 };
 
-const sortParts = (
-  workflows: WorkflowMap,
-  parts: readonly Part[],
-): Outcome[] => {
+const sortParts = (workflows: WorkflowMap, parts: readonly Part[]): Part[] => {
   const partsOnWorkflows: WorkflowPartsMap = new Map();
-  const outcomes: Outcome[] = [];
+  const acceptedParts: Part[] = [];
   partsOnWorkflows.set('in', [...parts]);
 
   while (partsOnWorkflows.size > 0) {
@@ -177,8 +175,8 @@ const sortParts = (
 
       for (const part of parts.splice(0)) {
         const outcome = applyWorkflowToPart(partsOnWorkflows, workflow, part);
-        if (outcome.isSome()) {
-          outcomes.push(outcome.value);
+        if (outcome.isSome() && outcome.value === 'A') {
+          acceptedParts.push(part);
         }
       }
 
@@ -188,19 +186,114 @@ const sortParts = (
     }
   }
 
-  return outcomes;
+  return acceptedParts;
+};
+
+const applyWorkflowToCombination = (
+  combinationsOnWorkflows: WorkflowCombinationsMap,
+  workflow: Workflow,
+  combination: RangeCombination,
+): RangeCombination[] => {
+  const rangeToRedirect = new Map<RangeCombination, WorkflowName>();
+  const acceptedRanges: RangeCombination[] = [];
+  const patchedCombination = combination;
+
+  for (const condition of workflow.conditions) {
+    if (condition.type === 'direct') {
+      rangeToRedirect.set(patchedCombination, condition.redirectTo);
+      break;
+    }
+
+    const rangeToTest = patchedCombination[condition.category];
+
+    if (rangeToTest.includes(condition.value)) {
+      const newRangeForCategory = match(condition.comparison)
+        .with('>', () => new Range(condition.value + 1, rangeToTest.max))
+        .with('<', () => new Range(rangeToTest.min, condition.value - 1))
+        .exhaustive();
+
+      const patchedRangeForCategory = match(condition.comparison)
+        .with('>', () => new Range(rangeToTest.min, condition.value))
+        .with('<', () => new Range(condition.value, rangeToTest.max))
+        .exhaustive();
+
+      const newCombination: RangeCombination = {
+        ...patchedCombination,
+        [condition.category]: newRangeForCategory,
+      };
+
+      patchedCombination[condition.category] = patchedRangeForCategory;
+      rangeToRedirect.set(newCombination, condition.redirectTo);
+    }
+  }
+
+  for (const [newCombination, redirectTo] of rangeToRedirect.entries()) {
+    if (redirectTo === 'A') {
+      acceptedRanges.push(newCombination);
+    } else if (redirectTo !== 'R') {
+      if (combinationsOnWorkflows.has(redirectTo)) {
+        combinationsOnWorkflows.get(redirectTo)!.push(newCombination);
+      } else {
+        combinationsOnWorkflows.set(redirectTo, [newCombination]);
+      }
+    }
+  }
+
+  return acceptedRanges;
+};
+
+const findAcceptedCombinations = (
+  workflows: WorkflowMap,
+  combination: RangeCombination,
+): RangeCombination[] => {
+  const combinationsOnWorkflows: WorkflowCombinationsMap = new Map();
+  const acceptedCombinations: RangeCombination[] = [];
+  combinationsOnWorkflows.set('in', [combination]);
+
+  while (combinationsOnWorkflows.size > 0) {
+    for (const [workflowName, combinations] of combinationsOnWorkflows) {
+      const workflow = workflows.get(workflowName)!;
+
+      for (const combination of combinations.splice(0)) {
+        const acceptedSubCombinations = applyWorkflowToCombination(
+          combinationsOnWorkflows,
+          workflow,
+          combination,
+        );
+
+        acceptedCombinations.push(...acceptedSubCombinations);
+      }
+
+      if (combinations.length === 0) {
+        combinationsOnWorkflows.delete(workflowName);
+      }
+    }
+  }
+
+  return acceptedCombinations;
 };
 
 day(19, (input, part) => {
   const [workflows, parts] = parseWorkflowsAndParts(input);
-  const sortedParts = sortParts(workflows, parts);
 
   part(1, () =>
+    sum(sortParts(workflows, parts).map((part) => sum(Object.values(part)))),
+  );
+
+  part(2, () =>
     sum(
-      sortedParts
-        .filter((outcome) => outcome.outcome === 'A')
-        .map((outcome) => sum(Object.values(outcome.part))),
+      findAcceptedCombinations(workflows, {
+        x: new Range(1, 4000),
+        m: new Range(1, 4000),
+        a: new Range(1, 4000),
+        s: new Range(1, 4000),
+      }).map(
+        (combination) =>
+          (1 + combination.x.distinctValuesCount()) *
+          (1 + combination.m.distinctValuesCount()) *
+          (1 + combination.a.distinctValuesCount()) *
+          (1 + combination.s.distinctValuesCount()),
+      ),
     ),
   );
-  part(2, () => 0);
 });

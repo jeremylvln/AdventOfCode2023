@@ -1,7 +1,8 @@
 import { match } from 'ts-pattern';
 
 import { day } from './lib.js';
-import { NonEmptyArray, memoize, sum } from './utils.js';
+import { sum } from './math.js';
+import { NonEmptyArray, memoize } from './utils.js';
 
 type Spring = '.' | '#' | '?';
 type Row = {

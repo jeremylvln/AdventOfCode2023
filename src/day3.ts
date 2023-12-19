@@ -1,7 +1,7 @@
 import { Option } from '@swan-io/boxed';
 
+import { AABB } from './geometry.js';
 import { day } from './lib.js';
-import { AABB } from './utils.js';
 
 type PartNumber = {
   id: number;

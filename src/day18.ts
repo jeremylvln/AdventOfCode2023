@@ -1,7 +1,8 @@
 import { match } from 'ts-pattern';
 
+import { shoelace } from './geometry.js';
 import { day } from './lib.js';
-import { Point, shoelace } from './utils.js';
+import { Point } from './math.js';
 
 type Direction = 'U' | 'D' | 'L' | 'R';
 type Instruction = {
@@ -46,7 +47,7 @@ const constructEdges = (instructions: readonly Instruction[]): Point[] => {
       })
       .exhaustive();
 
-    edges.push({ x, y });
+    edges.push(new Point(x, y));
   }
 
   return edges.filter(
